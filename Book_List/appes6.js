@@ -59,6 +59,49 @@ class UI {
   }
 }
 
+// Local storage class
+class Store {
+  // static because we're not going to instatiate the store
+  static getBooks() {
+    let books;
+    if(localStorage.getItem('books') === null) {
+      books = []
+    } else {
+      books = JSON.parse(localStorage.getItem('books')); // we needed to be an object, because the LS has only strings
+    }
+    return books;
+  }
+  
+  static displayBooks() {
+    const books = Store.getBooks();
+
+    books.forEach(function(book) {
+      const ui = new UI;
+      // Add book to UI
+      ui.addBookToList(book);
+    })
+  }
+
+  static addBook(book) {
+    const books = Store.getBooks();
+    books.push(book);
+    localStorage.setItem('books', JSON.stringify(books));
+  }
+
+  static removeBook(isbn) {
+    const books = Store.getBooks();
+    books.forEach(function(book, index) {
+      if (book.isbn === isbn) {
+        books.splice(index, 1)
+      }
+    })
+    localStorage.setItem('books', JSON.stringify(books));    
+  }
+}
+
+// DOM Load event to list each book stored to the book-list
+document.addEventListener('DOMContentLoaded', Store.displayBooks)
+
 // Event Listener for add book
 document.getElementById('book-form').addEventListener('submit', function(e) {
   // Get form values
@@ -78,6 +121,8 @@ document.getElementById('book-form').addEventListener('submit', function(e) {
   } else {
     // Add Book to list
     ui.addBookToList(book);
+    // Add to local storage
+    Store.addBook(book);
     // Show success
     ui.showAlert('Book added!', 'success')
     // Clear fields
@@ -94,6 +139,9 @@ document.getElementById('book-list').addEventListener('click', function(e) {
 
   // Delete Book
   ui.deleteBook(e.target);
+
+  // Remove from LS -- since they don't have IDs, we need to use an identifier -- the isbn, in this case. e.target is the 'x' / parent element is the 'tr' / previousElementSibling comes from Vanila JS and it's the previous 'td' in the DOM. texContent is the value of isbn
+  Store.removeBook(e.target.parentElement.previousElementSibling.textContent)  
 
   e.preventDefault();
 })
